@@ -29,3 +29,14 @@ dev = ["pytest"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# SHIP THE TYPES (PEP 561). Without py.typed inside the installed package, a
+# type checker and an editor both IGNORE every annotation in this library and
+# treat it as untyped, so autocomplete gives you nothing and mypy reports it as
+# missing stubs. The annotations were already here; nothing told anyone to use
+# them.
+#
+# No .pyi stub files, deliberately: they would restate every signature in a
+# second file that then drifts from the first.
+[tool.setuptools.package-data]
+census_loader = ["py.typed"]
