@@ -31,15 +31,16 @@ def _repo_root_from_test_file() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def test_pyproject_classifiers_include_typing_and_license():
+def test_pyproject_classifiers_include_typing():
     root = _repo_root_from_test_file()
     pyproject = root / "pyproject.toml"
     assert pyproject.exists(), f"pyproject.toml not found at {pyproject}"
 
     assert _classifier_declared(pyproject, "Typing :: Typed"), \
         "Typing :: Typed classifier missing in pyproject.toml [project].classifiers"
-    assert _classifier_declared(pyproject, "License :: OSI Approved :: MIT License"), \
-        "MIT license classifier missing from pyproject.toml [project].classifiers"
+    # The license is an SPDX expression now (license = "MIT"), pinned in
+    # tests/test_package_metadata.py: setuptools refuses a License classifier
+    # beside one, so this no longer asks for it.
 
     # Ensure the package ships py.typed marker in the installed source tree layout
     pytyped_marker = root / "src" / "census_loader" / "py.typed"

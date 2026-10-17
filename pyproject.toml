@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools>=68"]
+# 77 is the floor for the SPDX string form of `license` below. The TOML-table
+# form it replaced is deprecated and stops building after 2027-02-18.
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,14 +10,15 @@ version = "0.1.2"
 description = "A Python wrapper around the U.S. Census Bureau API that abstracts away variable codes, dataset endpoints, and FIPS identifiers behind a clean, human-readable interface."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Ian Solberg" }]
-dependencies = ["pandas", "numpy", "census", "python-dotenv", "requests"]
+# numpy is not here: nothing in src/ imports it, and pandas brings it anyway.
+dependencies = ["pandas", "census", "python-dotenv", "requests"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -24,6 +27,11 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Typing :: Typed",
 ]
+
+[project.urls]
+Homepage = "https://github.com/iasolb/census-loader"
+Repository = "https://github.com/iasolb/census-loader"
+Issues = "https://github.com/iasolb/census-loader/issues"
 
 [project.optional-dependencies]
 dev = ["pytest"]
