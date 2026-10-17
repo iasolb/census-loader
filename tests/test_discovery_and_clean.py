@@ -167,6 +167,25 @@ def test_search_returns_an_empty_list_and_says_so(capsys):
     assert "No series matching" in capsys.readouterr().out
 
 
+def test_search_reads_spaces_as_underscores(capsys):
+    """Catalog names are underscore_joined, so the words a reader types must
+    still find them: "median household" returned nothing until 2026-10-17."""
+    hits = search("median household")
+    capsys.readouterr()
+    assert "MEDIAN_HH_INCOME" in hits
+
+
+def test_search_with_several_words_needs_every_word_in_any_order(capsys):
+    hits = search("household median")
+    narrower_than = search("median")
+    capsys.readouterr()
+    assert "MEDIAN_HH_INCOME" in hits
+    for key in hits:
+        words = f"{key} {ALL_SERIES[key][0]}".lower().replace("_", " ")
+        assert "median" in words and "household" in words
+    assert set(hits) < set(narrower_than)
+
+
 def test_info_reports_a_series_with_its_lineage(capsys):
     key = a_series_key()
     info(key)

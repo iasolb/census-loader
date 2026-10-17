@@ -1,6 +1,6 @@
 import pickle
 import pandas as pd
-from .utils import Config, _load_census_bureau
+from .utils import Config, _load_census_bureau, _say
 from .series import ALL_SERIES, CATEGORIES, SUBCATEGORIES
 
 # PUBLIC API
@@ -37,6 +37,6 @@ def pull_census(config: Config) -> dict[str, pd.DataFrame] | None:
 
     with open(pkl_file, "wb") as f:
         pickle.dump(output, f)
-    print(f"\n  Saved → {pkl_file}")
+    _say(f"\n  Saved -> {pkl_file}")
 
     return output

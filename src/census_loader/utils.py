@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 from census import Census
-import os, time
+import os, sys, time
 from functools import reduce
 import pickle
 from .series import (
@@ -141,6 +141,18 @@ def resolve_series(spec) -> dict:
     )
 
 
+def _say(line: str = "") -> None:
+    """Print one progress line, never raising on the stream's encoding.
+
+    A Windows script whose stdout is piped or redirected writes cp1252, which
+    cannot encode every character an API error, a custom series name or a file
+    path may carry. The line reports on work that already happened, so it
+    degrades to '?' instead of crashing the pull it describes.
+    """
+    encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+    print(line.encode(encoding, errors="replace").decode(encoding))
+
+
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║  DISCOVERY — browse & search the catalog without reading series.py      ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
@@ -161,7 +173,7 @@ def available(category: str | None = None) -> None:
         print("Categories  (pass one to available() to drill down)\n")
         for cat_name, cat_dict in CATEGORIES.items():
             subs = list(SUBCATEGORIES.get(cat_name, {}).keys())
-            sub_str = f"\n    └ {', '.join(subs)}" if subs else ""
+            sub_str = f"\n    L {', '.join(subs)}" if subs else ""
             print(f"  {cat_name:<24s} ({len(cat_dict):>3d} series){sub_str}")
         print(f"\n  {'TOTAL':<24s} ({len(ALL_SERIES):>3d} series)")
         return
@@ -184,22 +196,34 @@ def available(category: str | None = None) -> None:
     print()
 
 
+def _words(text: str) -> list[str]:
+    """Lowercase words of *text*, with underscores read as spaces.
+
+    Catalog keys and names are underscore_joined (``Median_Household_Income``),
+    so a reader typing "median household" has to land on them.
+    """
+    return text.lower().replace("_", " ").split()
+
+
 def search(keyword: str) -> list[str]:
     """
     Search the catalog by keyword (case-insensitive).
 
-    Searches series keys AND friendly names::
+    Searches series keys AND friendly names. Spaces and underscores are the
+    same thing, and a multi-word query matches only series carrying every
+    word::
 
         search("poverty")
-        search("median")
+        search("median household")
         search("hispanic")
 
     Returns list of matching series keys.
     """
-    kw = keyword.lower()
+    words = _words(keyword)
     hits = []
     for key, (name, _, _) in ALL_SERIES.items():
-        if kw in key.lower() or kw in name.lower():
+        haystack = " ".join(_words(f"{key} {name}"))
+        if all(w in haystack for w in words):
             hits.append(key)
 
     if not hits:
@@ -238,8 +262,8 @@ def info(series_key: str) -> None:
 
     print(f"\n  Key:          {key}")
     print(f"  Name:         {name}")
-    print(f"  Category:     {parent_cat or '—'}")
-    print(f"  Subcategory:  {parent_sub or '—'}")
+    print(f"  Category:     {parent_cat or '-'}")
+    print(f"  Subcategory:  {parent_sub or '-'}")
     print(f"  Dataset:      {dataset}")
     if isinstance(variables, str):
         print(f"  Variables:    {variables}  (full table group)")
@@ -921,18 +945,18 @@ def _load_census_bureau(config: Config) -> dict[str, pd.DataFrame] | None:
             var_label = (
                 f"group({group_name})" if group_name else f"{len(var_list)} vars"
             )
-            print(f"  ✓ {name:<40s} ({series_id:<30s} [{dataset}] {var_label})")
+            _say(f"  ok   {name:<40s} ({series_id:<30s} [{dataset}] {var_label})")
             time.sleep(0.5)
 
         except Exception as e:
             failed.append((series_id, name, str(e)))
-            print(f"  ✗ {name:<40s} ({series_id}) — {e}")
+            _say(f"  FAIL {name:<40s} ({series_id}): {e}")
             time.sleep(0.5)
 
     if failed:
-        print(f"\n⚠  {len(failed)} series failed:")
+        _say(f"\n!  {len(failed)} series failed:")
         for sid, nm, err in failed:
-            print(f"    {nm} ({sid}): {err}")
+            _say(f"    {nm} ({sid}): {err}")
 
     print(f"\nLoaded {len(frames)} series  |  {len(failed)} failed")
     return frames
