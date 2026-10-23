@@ -62,4 +62,4 @@ pytest
 
 ## License
 
-MIT, under the [MIT License](https://github.com/iasolb/census-loader/blob/main/LICENSE).
+Released under the [MIT License](https://github.com/iasolb/census-loader/blob/main/LICENSE).
